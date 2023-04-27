@@ -1,4 +1,7 @@
 DIPParams:
+  n_iter: 100000
+  lr: 0.001
+
   in_channels: 1
   out_channels: 1
   nscale: 3
@@ -15,7 +18,7 @@ IterParams:
   n_iter: 2000
   mu: 0.001
   lr: 0.005
-  flag: 1
+  flag: 0
 
 ImgModelParams:
   apa_size: 25

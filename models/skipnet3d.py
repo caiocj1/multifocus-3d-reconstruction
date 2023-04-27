@@ -11,6 +11,8 @@ class SkipNet3D(nn.Module):
     def __init__(self):
         super().__init__()
 
+        self.read_config()
+
         self.down = nn.ModuleList([])
         self.down.append(
             Down(self.in_channels, self.down_channels[0], self.filter_size_down, self.pad))

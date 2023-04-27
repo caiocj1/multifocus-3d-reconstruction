@@ -8,6 +8,7 @@ import yaml
 from collections import defaultdict
 
 from trainers.iter_trainer import IterTrainer
+from trainers.dip_trainer import DIPTrainer
 from img_model import ImagingModel
 from utils.loading import *
 
@@ -60,8 +61,10 @@ if __name__ == "__main__":
 
     model_dict = defaultdict()
     model_dict["iter"] = IterTrainer
+    model_dict["dip"] = DIPTrainer
 
-    trainer = model_dict[args.model](img_model, imgs, device, gt_slices=slices, version=args.version)
+    trainer = model_dict[args.model](img_model, imgs, device,
+                                     gt_slices=slices, version=args.version, weights=args.weights)
 
     # ------------------ TRAIN ------------------
     trainer.train()

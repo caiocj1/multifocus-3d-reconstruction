@@ -8,9 +8,9 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 from total_variation_3d import TotalVariationL2
 from utils.lighting import default_transmittance
+from models.skipnet3d import SkipNet3D
 
-
-class IterTrainer:
+class DIPTrainer:
     def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None):
         self.read_config()
 
@@ -20,34 +20,35 @@ class IterTrainer:
             self.gt = self.gt.to(device)
         self.fwd = img_model
         self.layers = input_imgs.shape[-3]
-        self.version = version
 
         if version is not None:
             self.writer = SummaryWriter(log_dir=f"tb_logs/{version}")
 
-        # ------------- ITER SPECIFIC INIT -------------
-        alpha = default_transmittance(self.flag, self.obs)
-        alpha = torch.clip(alpha, min=1./255, max=1)
-        alpha = torch.log(alpha).unsqueeze(0).unsqueeze(0) # (1, 1, layer, height, width)
+        # ------------- DIP SPECIFIC INIT -------------
+        self.net = SkipNet3D().to(device)
 
-        alpha = alpha.to(device)
-        self.omega = alpha.detach().requires_grad_()
+        if weights is not None:
+            self.net.load_state_dict(torch.load(weights + "/net.pt"))
+            self.inp = torch.load(weights + "/inp.pt")
+        else:
+            cell_dim = tuple(input_imgs.shape[-3:])
+            self.inp = self.inp = torch.zeros((1, 1) + cell_dim, device=device, dtype=torch.float32)
+            self.inp.uniform_()
+            self.inp *= 1.0 / 10  # inp_noise_var
+            self.inp = self.inp.detach().clone()
 
-        self.optim = torch.optim.Adam([self.omega], lr=self.lr)
+        self.optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
 
-        self.loss_fn = nn.MSELoss(reduction="sum")
-        self.tv_loss = TotalVariationL2(is_mean_reduction=False)
+        self.loss_fn = nn.L1Loss()
 
     def read_config(self):
         config_path = os.path.join(os.getcwd(), "config.yaml")
         with open(config_path) as f:
             params = yaml.load(f, Loader=yaml.SafeLoader)
-        iter_params = params["IterParams"]
+        iter_params = params["DIPParams"]
 
-        self.mu = iter_params["mu"]
-        self.lr = iter_params["lr"]
         self.n_iter = iter_params["n_iter"]
-        self.flag = iter_params["flag"]
+        self.lr = iter_params["lr"]
 
     def train(self):
         try:
@@ -55,37 +56,28 @@ class IterTrainer:
                 for i in pbar:
                     # -------- OPTIMIZATION --------
                     self.optim.zero_grad()
-                    loss_sum = 0
 
-                    img_list = self.fwd(self.omega)
-                    for s in range(len(img_list)):
-                        out = img_list[s]
-                        loss = self.loss_fn(out, self.obs[s])
-                        loss.backward()
-                        loss_sum = loss_sum + loss.cpu().item()
+                    alpha = self.net(self.inp)
+                    out = self.fwd(torch.log(alpha))
+                    out = torch.stack(out)
 
-                    constraint = self.mu * self.tv_loss(self.omega)
-                    constraint.backward()
-
-                    loss_sum = loss_sum + constraint.cpu().item()
-
+                    loss = self.loss_fn(out, self.obs)
+                    loss.backward()
                     self.optim.step()
 
                     # -------- ADD METRICS TO PBAR --------
                     if self.gt is not None:
-                        trans = torch.exp(self.omega.detach())
-                        trans = trans.to('cpu')
-                        trans = trans.data.squeeze().float().clamp_(0, 1)
-                        psnr = peak_signal_noise_ratio(trans.cpu().detach().numpy(), self.gt[0].cpu().detach().numpy())
-                        ssim = structural_similarity(trans.cpu().detach().numpy(), self.gt[0].cpu().detach().numpy(),
+                        alpha_np = alpha[0, 0].detach().cpu().numpy()
+                        psnr = peak_signal_noise_ratio(alpha_np, self.gt[0].cpu().detach().numpy())
+                        ssim = structural_similarity(alpha_np, self.gt[0].cpu().detach().numpy(),
                                                      multichannel=False, win_size=self.layers)
-                        pbar.set_postfix({"psnr": psnr, "ssim": ssim, "loss": loss_sum})
+                        pbar.set_postfix({"psnr": psnr, "ssim": ssim, "loss": loss.item()})
                     else:
-                        pbar.set_postfix({"loss": loss_sum})
+                        pbar.set_postfix({"loss": loss.item()})
 
                     # -------- LOG TO TENSORBOARD --------
                     if hasattr(self, "writer"):
-                        self.writer.add_scalar("loss", loss_sum, global_step=i)
+                        self.writer.add_scalar("loss", loss.item(), global_step=i)
                         if self.gt is not None:
                             self.writer.add_scalar("psnr", psnr, global_step=i)
                             self.writer.add_scalar("ssim", ssim, global_step=i)
