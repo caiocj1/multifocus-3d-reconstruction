@@ -1,5 +1,5 @@
 DIPParams:
-  n_iter: 100000
+  n_iter: 30000
   lr: 0.001
 
   in_channels: 1
@@ -15,7 +15,7 @@ DIPParams:
   filter_size_skip: 1
 
 IterParams:
-  n_iter: 2000
+  n_iter: 5000
   mu: 0.001
   lr: 0.005
   flag: 0

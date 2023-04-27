@@ -2,28 +2,17 @@ import os
 import yaml
 import torch
 import torch.nn as nn
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 from total_variation_3d import TotalVariationL2
 from utils.lighting import default_transmittance
+from trainer import Trainer
 
 
-class IterTrainer:
+class IterTrainer(Trainer):
     def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None):
-        self.read_config()
-
-        self.obs = input_imgs[0].to(device)
-        self.gt = gt_slices
-        if self.gt is not None:
-            self.gt = self.gt.to(device)
-        self.fwd = img_model
-        self.layers = input_imgs.shape[-3]
-        self.version = version
-
-        if version is not None:
-            self.writer = SummaryWriter(log_dir=f"tb_logs/{version}")
+        super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- ITER SPECIFIC INIT -------------
         alpha = default_transmittance(self.flag, self.obs)
@@ -72,6 +61,7 @@ class IterTrainer:
                     self.optim.step()
 
                     # -------- ADD METRICS TO PBAR --------
+                    psnr, ssim = None, None
                     if self.gt is not None:
                         trans = torch.exp(self.omega.detach())
                         trans = trans.to('cpu')
@@ -84,18 +74,13 @@ class IterTrainer:
                         pbar.set_postfix({"loss": loss_sum})
 
                     # -------- LOG TO TENSORBOARD --------
-                    if hasattr(self, "writer"):
-                        self.writer.add_scalar("loss", loss_sum, global_step=i)
-                        if self.gt is not None:
-                            self.writer.add_scalar("psnr", psnr, global_step=i)
-                            self.writer.add_scalar("ssim", ssim, global_step=i)
+                    self.log_metrics(i, loss_sum, psnr, ssim)
+                    vol_list = [self.obs, torch.stack(img_list), self.gt, torch.exp(self.omega)] \
+                        if self.gt is not None else \
+                        [self.obs, torch.stack(img_list), torch.exp(self.omega)]
+                    vol_list = [vol.cpu().detach().numpy() for vol in vol_list]
+                    self.log_figs(i, *vol_list)
         except KeyboardInterrupt:
             print("Training interrupted.")
 
-        if hasattr(self, "writer"):
-            img_model_hparams = {key: vars(self.fwd)[key] for key in vars(self.fwd)
-                                 if (type(vars(self.fwd)[key]) == int or type(vars(self.fwd)[key]) == float)}
-            self.writer.add_text("img_model_hparams", str(img_model_hparams), 0)
-
-            self.writer.flush()
-            self.writer.close()
+        self.log_hparams()

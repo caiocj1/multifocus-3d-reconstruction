@@ -2,27 +2,16 @@ import os
 import yaml
 import torch
 import torch.nn as nn
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
-from total_variation_3d import TotalVariationL2
-from utils.lighting import default_transmittance
 from models.skipnet3d import SkipNet3D
+from trainer import Trainer
 
-class DIPTrainer:
+
+class DIPTrainer(Trainer):
     def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None):
-        self.read_config()
-
-        self.obs = input_imgs[0].to(device)
-        self.gt = gt_slices
-        if self.gt is not None:
-            self.gt = self.gt.to(device)
-        self.fwd = img_model
-        self.layers = input_imgs.shape[-3]
-
-        if version is not None:
-            self.writer = SummaryWriter(log_dir=f"tb_logs/{version}")
+        super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- DIP SPECIFIC INIT -------------
         self.net = SkipNet3D().to(device)
@@ -66,6 +55,7 @@ class DIPTrainer:
                     self.optim.step()
 
                     # -------- ADD METRICS TO PBAR --------
+                    psnr, ssim = None, None
                     if self.gt is not None:
                         alpha_np = alpha[0, 0].detach().cpu().numpy()
                         psnr = peak_signal_noise_ratio(alpha_np, self.gt[0].cpu().detach().numpy())
@@ -76,18 +66,11 @@ class DIPTrainer:
                         pbar.set_postfix({"loss": loss.item()})
 
                     # -------- LOG TO TENSORBOARD --------
-                    if hasattr(self, "writer"):
-                        self.writer.add_scalar("loss", loss.item(), global_step=i)
-                        if self.gt is not None:
-                            self.writer.add_scalar("psnr", psnr, global_step=i)
-                            self.writer.add_scalar("ssim", ssim, global_step=i)
+                    self.log_metrics(i, loss.item(), psnr, ssim)
+                    vol_list = [self.obs, out, self.gt, alpha] if self.gt is not None else [self.obs, out, alpha]
+                    vol_list = [vol.cpu().detach().numpy() for vol in vol_list]
+                    self.log_figs(i, *vol_list)
         except KeyboardInterrupt:
             print("Training interrupted.")
 
-        if hasattr(self, "writer"):
-            img_model_hparams = {key: vars(self.fwd)[key] for key in vars(self.fwd)
-                                 if (type(vars(self.fwd)[key]) == int or type(vars(self.fwd)[key]) == float)}
-            self.writer.add_text("img_model_hparams", str(img_model_hparams), 0)
-
-            self.writer.flush()
-            self.writer.close()
+        self.log_hparams()
