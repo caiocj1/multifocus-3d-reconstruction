@@ -18,10 +18,11 @@ if __name__ == "__main__":
 
     parser.add_argument("--model", "-m", required=True, choices=["iter", "dip", "nf"], help="model selection")
     parser.add_argument("--input", "-i", required=True, help="observed images path")
-    parser.add_argument("--ground_truth", "-gt", required=False, help="GT vol path")
 
-    parser.add_argument("--version", "-v", default=None, type=str, help="version name for Tensorboard")
-    parser.add_argument("--weights", "-w", default=None, type=str, help="path to model state dict")
+    parser.add_argument("--ground_truth", "-gt", help="GT vol path")
+    parser.add_argument("--pretraining", "-p", choices=["sc", "v3"], help="type of pretraining to perform")
+    parser.add_argument("--version", "-v", type=str, help="version name for Tensorboard")
+    parser.add_argument("--weights", "-w", type=str, help="path to model state dict")
 
     args = parser.parse_args()
 
@@ -67,4 +68,6 @@ if __name__ == "__main__":
                                      gt_slices=slices, version=args.version, weights=args.weights)
 
     # ------------------ TRAIN ------------------
+    if args.pretraining is not None:
+        trainer.pretrain(args.pretraining)
     trainer.train()

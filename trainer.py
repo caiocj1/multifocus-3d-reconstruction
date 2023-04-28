@@ -21,9 +21,13 @@ class Trainer:
     def read_config(self):
         raise NotImplementedError
 
+    def pretrain(self, type):
+        raise NotImplementedError
+
     def train(self):
         raise NotImplementedError
 
+    # --------------------- LOGGING ---------------------
     def log_metrics(self, step, loss, psnr=None, ssim=None):
         if hasattr(self, "writer"):
             self.writer.add_scalar("loss", loss, global_step=step)

@@ -7,6 +7,7 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 from models.skipnet3d import SkipNet3D
 from trainer import Trainer
+from utils.pretraining import pretraining_v3, pretraining_sc
 
 
 class DIPTrainer(Trainer):
@@ -14,6 +15,7 @@ class DIPTrainer(Trainer):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- DIP SPECIFIC INIT -------------
+        self.weights = weights
         self.net = SkipNet3D().to(device)
 
         if weights is not None:
@@ -34,10 +36,22 @@ class DIPTrainer(Trainer):
         config_path = os.path.join(os.getcwd(), "config.yaml")
         with open(config_path) as f:
             params = yaml.load(f, Loader=yaml.SafeLoader)
-        iter_params = params["DIPParams"]
+        dip_params = params["DIPParams"]
 
-        self.n_iter = iter_params["n_iter"]
-        self.lr = iter_params["lr"]
+        self.n_iter = dip_params["n_iter"]
+        self.lr = dip_params["lr"]
+        self.pretr_iter = dip_params["pretr_iter"]
+
+    def pretrain(self, type):
+        if self.weights is not None:
+            print("Both weights and pretraining were given, skipping pretraining and loading weights.")
+            return
+
+        writer = self.writer if hasattr(self, "writer") else None
+        if type == "v3":
+            pretraining_v3(self.inp, self.net, self.pretr_iter, self.version, writer=writer)
+        elif type == "sc":
+            pretraining_sc(self.inp, self.net, 500, writer=writer)
 
     def train(self):
         try:
