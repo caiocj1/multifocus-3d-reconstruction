@@ -6,6 +6,7 @@ import numpy as np
 import math
 import torch
 
+
 def default_transmittance(flag, img):
     """
     default_transmittance

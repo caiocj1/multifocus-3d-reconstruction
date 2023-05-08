@@ -68,7 +68,7 @@ class IterTrainer(Trainer):
                         trans = trans.data.squeeze().float().clamp_(0, 1)
                         psnr = peak_signal_noise_ratio(trans.cpu().detach().numpy(), self.gt[0].cpu().detach().numpy())
                         ssim = structural_similarity(trans.cpu().detach().numpy(), self.gt[0].cpu().detach().numpy(),
-                                                     multichannel=False, win_size=self.layers)
+                                                     channel_axis=False, win_size=self.layers)
                         pbar.set_postfix({"psnr": psnr, "ssim": ssim, "loss": loss_sum})
                     else:
                         pbar.set_postfix({"loss": loss_sum})

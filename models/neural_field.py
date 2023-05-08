@@ -2,35 +2,47 @@ import torch
 import torch.nn as nn
 import math
 import numpy as np
+import os
+import yaml
+
 
 class NeuralField(nn.Module):
-    def __init__(self,
-                 n_layers: int = 10,
-                 hidden_size: int = 208,
-                 use_pe: bool = True):
+    def __init__(self):
         super().__init__()
 
-        if use_pe:
+        self.read_config()
+
+        if self.use_pe:
             self.pe = PositionalEncoding()
             input_size = self.pe.input_size()
         else:
             input_size = 3
 
-        layers1 = [nn.Linear(input_size, hidden_size), nn.LeakyReLU()]
-        for i in range(((n_layers - 2) // 2) - 1):
-            layers1.append(nn.Linear(hidden_size, hidden_size))
+        layers1 = [nn.Linear(input_size, self.hidden_size), nn.LeakyReLU()]
+        for i in range(((self.n_layers - 2) // 2) - 1):
+            layers1.append(nn.Linear(self.hidden_size, self.hidden_size))
             layers1.append(nn.LeakyReLU())
-        layers1.append(nn.Linear(hidden_size, hidden_size))
+        layers1.append(nn.Linear(self.hidden_size, self.hidden_size))
         layers1.append(nn.LeakyReLU())
 
-        layers2 = [nn.Linear(hidden_size + input_size, hidden_size), nn.LeakyReLU()]
-        for i in range(((n_layers - 2) // 2) - 1):
-            layers2.append(nn.Linear(hidden_size, hidden_size))
+        layers2 = [nn.Linear(self.hidden_size + input_size, self.hidden_size), nn.LeakyReLU()]
+        for i in range(((self.n_layers - 2) // 2) - 1):
+            layers2.append(nn.Linear(self.hidden_size, self.hidden_size))
             layers2.append(nn.LeakyReLU())
 
-        layers2.append(nn.Linear(hidden_size, 1))
+        layers2.append(nn.Linear(self.hidden_size, 1))
         self.nf1 = nn.Sequential(*layers1)
         self.nf2 = nn.Sequential(*layers2)
+
+    def read_config(self):
+        config_path = os.path.join(os.getcwd(), "config.yaml")
+        with open(config_path) as f:
+            params = yaml.load(f, Loader=yaml.SafeLoader)
+        nf_params = params["NFParams"]
+
+        self.n_layers = nf_params["n_layers"]
+        self.hidden_size = nf_params["hidden_size"]
+        self.use_pe = nf_params["use_pe"]
 
     def forward(self, input):
         if hasattr(self, "pe"):
@@ -74,4 +86,3 @@ class PositionalEncoding(nn.Module):
             tot_freq = torch.cat([tot_freq, cur_freq], axis=-1)
 
         return tot_freq
-

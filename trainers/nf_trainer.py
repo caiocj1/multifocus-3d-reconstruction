@@ -3,55 +3,46 @@ import yaml
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+import numpy as np
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
-from models.skipnet3d import SkipNet3D
+from utils.pretraining import pretraining_const
+from models.neural_field import NeuralField
 from trainer import Trainer
-from utils.pretraining import pretraining_v3, pretraining_sc
 
 
-class DIPTrainer(Trainer):
+class NFTrainer(Trainer):
     def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
-        # ------------- DIP SPECIFIC INIT -------------
-        self.weights = weights
-        self.net = SkipNet3D().to(device)
+        # ------------- NF SPECIFIC INIT -------------
+        self.net = NeuralField().to(device)
 
-        if weights is not None:
-            self.net.load_state_dict(torch.load(weights + "/net.pt"))
-            self.inp = torch.load(weights + "/inp.pt")
-        else:
-            cell_dim = tuple(input_imgs.shape[-3:])
-            self.inp = torch.zeros((1, 1) + cell_dim, device=device, dtype=torch.float32)
-            self.inp.uniform_()
-            self.inp *= 1.0 / 10  # inp_noise_var
-            self.inp = self.inp.detach().clone()
+        self.cell_dim = tuple(input_imgs.shape[-3:])
+        n_z, n_x, n_y = self.cell_dim
+        x = torch.linspace(-1, 1, n_x).to(device) / 10
+        y = torch.linspace(-1, 1, n_y).to(device) / 10
+        z = torch.linspace(-1, 1, n_z).to(device) / 10
 
-        self.optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
+        self.inp = torch.cartesian_prod(z, x, y).to(device)
 
         self.loss_fn = nn.L1Loss()
+
+        self.optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
+        # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, [500], gamma=0.5)
 
     def read_config(self):
         config_path = os.path.join(os.getcwd(), "config.yaml")
         with open(config_path) as f:
             params = yaml.load(f, Loader=yaml.SafeLoader)
-        dip_params = params["DIPParams"]
+        nf_params = params["NFParams"]
 
-        self.n_iter = dip_params["n_iter"]
-        self.lr = dip_params["lr"]
-        self.pretr_iter = dip_params["pretr_iter"]
+        self.n_iter = nf_params["n_iter"]
+        self.lr = nf_params["lr"]
 
     def pretrain(self, type):
-        if self.weights is not None:
-            print("Both weights and pretraining were given, skipping pretraining and loading weights.")
-            return
-
-        writer = self.writer if hasattr(self, "writer") else None
-        if type == "v3":
-            pretraining_v3(self.inp, self.net, self.pretr_iter, self.version, writer=writer)
-        elif type == "sc":
-            pretraining_sc(self.inp, self.net, 500, writer=writer)
+        if type == "const":
+            pretraining_const(self.inp, self.net)
         else:
             raise Exception("Invalid pretraining version.")
 
@@ -62,18 +53,21 @@ class DIPTrainer(Trainer):
                     # -------- OPTIMIZATION --------
                     self.optim.zero_grad()
 
-                    alpha = self.net(self.inp)
+                    alpha = self.net(self.inp).reshape(self.cell_dim)[None, None]
                     out = self.fwd(torch.log(alpha))
                     out = torch.stack(out)
 
                     loss = self.loss_fn(out, self.obs)
+
                     loss.backward()
                     self.optim.step()
+
+                    # self.scheduler.step()
 
                     # -------- ADD METRICS TO PBAR --------
                     psnr, ssim = None, None
                     if self.gt is not None:
-                        alpha_np = alpha[0, 0].detach().cpu().numpy()
+                        alpha_np = np.clip(alpha[0, 0].detach().cpu().numpy(), 0, 1)
                         psnr = peak_signal_noise_ratio(alpha_np, self.gt[0].cpu().detach().numpy())
                         ssim = structural_similarity(alpha_np, self.gt[0].cpu().detach().numpy(),
                                                      channel_axis=False, win_size=self.layers)

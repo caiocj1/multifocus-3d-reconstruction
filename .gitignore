@@ -2,3 +2,4 @@ tb_logs/
 inputs/
 results/
 __pycache__/
+*.sh

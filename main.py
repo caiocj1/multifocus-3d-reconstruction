@@ -1,14 +1,11 @@
-# The generic driver requires too many parameters to be provided as input
-# this is a modified version, that keeps some of them fixed
-# Also, uses one of th precomputed psfs
-# input should be the slices dir
-
 import argparse
 import yaml
 from collections import defaultdict
+import sys
 
 from trainers.iter_trainer import IterTrainer
 from trainers.dip_trainer import DIPTrainer
+from trainers.nf_trainer import NFTrainer
 from img_model import ImagingModel
 from utils.loading import *
 
@@ -20,11 +17,14 @@ if __name__ == "__main__":
     parser.add_argument("--input", "-i", required=True, help="observed images path")
 
     parser.add_argument("--ground_truth", "-gt", help="GT vol path")
-    parser.add_argument("--pretraining", "-p", choices=["sc", "v3"], help="type of pretraining to perform")
+    parser.add_argument("--pretraining", "-p", choices=["sc", "v3", "const"], help="type of pretraining to perform")
     parser.add_argument("--version", "-v", type=str, help="version name for Tensorboard")
     parser.add_argument("--weights", "-w", type=str, help="path to model state dict")
 
     args = parser.parse_args()
+
+    if args.version is not None:
+        print(args.version)
 
     # ------------------ READ CONFIG FILE ------------------
     config_path = os.path.join(os.getcwd(), "config.yaml")
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     model_dict = defaultdict()
     model_dict["iter"] = IterTrainer
     model_dict["dip"] = DIPTrainer
+    model_dict["nf"] = NFTrainer
 
     trainer = model_dict[args.model](img_model, imgs, device,
                                      gt_slices=slices, version=args.version, weights=args.weights)

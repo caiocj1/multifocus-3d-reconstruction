@@ -112,3 +112,31 @@ def pretraining_sc(inp, net, n_iter, cval=0.75, writer=None):
 
     except KeyboardInterrupt:
         print('Received keyboard interrupt. Stopping pre-training.')
+
+
+def pretraining_const(inp, net, niter=100, cval=0.75):
+    """
+    Neural field fit to constant value as initialization
+    :return: None
+    """
+    target = cval * torch.ones((len(inp), 1), device=inp.device)
+    optim = torch.optim.Adam(net.parameters())
+    lossfn = torch.nn.MSELoss()
+    # just trying to fit a constant value, MSE should be enough
+
+    try:
+        with tqdm(range(niter + 1)) as pbar:
+            for i in pbar:
+                alpha = net(inp)
+
+                # just trying to fit a constant value, MSE should be enough
+                loss = lossfn(alpha, target)
+
+                optim.zero_grad()
+                loss.backward()
+                optim.step()
+
+                pbar.set_postfix(loss='{:.10f}'.format(loss.item()))
+
+    except KeyboardInterrupt:
+        print('Received keyboard interrupt. Stopping pre-training.')

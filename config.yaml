@@ -22,6 +22,14 @@ IterParams:
   lr: 0.005
   flag: 0
 
+NFParams:
+  n_iter: 100000
+  lr: 0.0001
+
+  n_layers: 10
+  hidden_size: 208
+  use_pe: True
+
 ImgModelParams:
   apa_size: 25
   xy_res: 0.92
