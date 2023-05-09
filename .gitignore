@@ -3,3 +3,4 @@ inputs/
 results/
 __pycache__/
 *.sh
+utils/__pychache__/
