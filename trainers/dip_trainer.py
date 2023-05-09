@@ -16,7 +16,8 @@ class DIPTrainer(Trainer):
 
         # ------------- DIP SPECIFIC INIT -------------
         self.weights = weights
-        self.net = SkipNet3D().to(device)
+        self.net = SkipNet3D()
+        self.net = nn.DataParallel(self.net).to(device)
 
         if weights is not None:
             self.net.load_state_dict(torch.load(weights + "/net.pt"))
@@ -49,11 +50,11 @@ class DIPTrainer(Trainer):
 
         writer = self.writer if hasattr(self, "writer") else None
         if type == "v3":
-            pretraining_v3(self.inp, self.net, self.pretr_iter, self.version, writer=writer)
+            pretraining_v3(self.inp, self.net.module, self.pretr_iter, self.version, writer=writer)
         elif type == "v2":
-            pretraining_v2(self.inp, self.net, self.version, writer=writer)
+            pretraining_v2(self.inp, self.net.module, self.version, writer=writer)
         elif type == "sc":
-            pretraining_sc(self.inp, self.net, 500, writer=writer)
+            pretraining_sc(self.inp, self.net.module, 500, writer=writer)
         else:
             raise Exception("Invalid pretraining version.")
 
