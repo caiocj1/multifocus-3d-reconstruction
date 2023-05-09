@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -43,6 +43,47 @@ class PretrainingDataset(Dataset):
         return dataset
 
 
+def pretraining_v2(inp, net, version, n_epochs=5, writer=None):
+    target_shape = list(inp.shape)
+
+    device = next(net.parameters()).device
+
+    train_dataset = PretrainingDataset(1000, target_shape)
+    train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=20)
+
+    optim = torch.optim.Adam(net.parameters())
+    loss_fn = torch.nn.MSELoss()
+
+    try:
+        for e in range(n_epochs):
+            with tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False, desc=f"Epoch {e}") as pbar:
+                for i, (x, y) in pbar:
+                    x = x[:, None].to(device).float()
+                    y = y[:, None].to(device).float()
+                    alpha = net(x)
+
+                    loss = loss_fn(alpha, y)
+
+                    optim.zero_grad()
+                    loss.backward()
+                    optim.step()
+
+                    pbar.set_postfix(loss='{:.10f}'.format(loss.item()))
+
+                    if writer is not None:
+                        writer.add_scalar("pretraining_loss/train_step", loss.item(),
+                                          global_step=e * len(train_dataloader) + i)
+                        # Visualize
+                        if i % 10 == 0:
+                            fig = plot_slices(y[0, 0].cpu().detach().numpy(), alpha[0, 0].cpu().detach().numpy())
+                            writer.add_figure(f"pretraining_train/img", fig, global_step=e * len(train_dataloader) + i)
+    except KeyboardInterrupt:
+        print('Received keyboard interrupt. Stopping pre-training.')
+
+    torch.save(net.state_dict(), f"tb_logs/{version}/net.pt")
+    torch.save(inp, f"tb_logs/{version}/inp.pt")
+
+
 def pretraining_v3(inp, net, n_iter, version, writer=None):
     target_shape = list(inp.shape)
 
@@ -70,8 +111,7 @@ def pretraining_v3(inp, net, n_iter, version, writer=None):
                 if writer is not None:
                     writer.add_scalar("pretraining_loss", loss.item(), global_step=i)
                     if i % 10 == 0:
-                        fig = plot_slices(y[0, 0].cpu().detach().numpy(),
-                                          alpha[0, 0].cpu().detach().numpy())
+                        fig = plot_slices(y[0, 0].cpu().detach().numpy(), alpha[0, 0].cpu().detach().numpy())
                         writer.add_figure(f"pretraining_train/img", fig, global_step=i)
 
     except KeyboardInterrupt:

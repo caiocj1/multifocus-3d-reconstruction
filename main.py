@@ -17,9 +17,9 @@ if __name__ == "__main__":
     parser.add_argument("--input", "-i", required=True, help="observed images path")
 
     parser.add_argument("--ground_truth", "-gt", help="GT vol path")
-    parser.add_argument("--pretraining", "-p", choices=["sc", "v3", "const"], help="type of pretraining to perform")
+    parser.add_argument("--pretraining", "-p", choices=["sc", "v2", "v3", "const"], help="type of pretraining")
     parser.add_argument("--version", "-v", type=str, help="version name for Tensorboard")
-    parser.add_argument("--weights", "-w", type=str, help="path to model state dict")
+    parser.add_argument("--weights", "-w", type=str, help="path to load model state dict")
 
     args = parser.parse_args()
 

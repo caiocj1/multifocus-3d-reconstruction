@@ -7,7 +7,7 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 from models.skipnet3d import SkipNet3D
 from trainer import Trainer
-from utils.pretraining import pretraining_v3, pretraining_sc
+from utils.pretraining import pretraining_v3, pretraining_sc, pretraining_v2
 
 
 class DIPTrainer(Trainer):
@@ -50,6 +50,8 @@ class DIPTrainer(Trainer):
         writer = self.writer if hasattr(self, "writer") else None
         if type == "v3":
             pretraining_v3(self.inp, self.net, self.pretr_iter, self.version, writer=writer)
+        elif type == "v2":
+            pretraining_v2(self.inp, self.net, self.version, writer=writer)
         elif type == "sc":
             pretraining_sc(self.inp, self.net, 500, writer=writer)
         else:

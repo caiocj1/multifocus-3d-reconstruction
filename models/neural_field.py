@@ -54,8 +54,8 @@ class NeuralField(nn.Module):
         return out
 
 
-class PositionalEncoding(nn.Module):
-    def __init__(self, l_z = 5, l_xy = 6):
+class RadialEncoding(nn.Module):
+    def __init__(self, l_z = 5, l_xy = 11):
         super().__init__()
 
         self.l_z = l_z
@@ -70,6 +70,7 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, pts):
         device = pts.device
+        tot_freq = None
 
         xy_freq = pts[:, 1:] @ torch.tensor(self.fourier_mapping).to(device)
 
@@ -83,6 +84,41 @@ class PositionalEncoding(nn.Module):
         for l in range(self.l_z):
             cur_freq = torch.cat(
                 [torch.sin(2 ** l * np.pi * pts[:, 0][:, None]), torch.cos(2 ** l * np.pi * pts[:, 0][:, None])], dim=-1)
-            tot_freq = torch.cat([tot_freq, cur_freq], axis=-1)
+            tot_freq = torch.cat([tot_freq, cur_freq], dim=-1)
 
         return tot_freq
+
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, l_z=7, l_xy=11):
+        super().__init__()
+
+        self.l_z = l_z
+        self.l_xy = l_xy
+
+    def input_size(self):
+        return 4 * self.l_xy + 2 * self.l_z
+
+    def forward(self, pts):
+        tot_freq = None
+
+        for l in range(self.l_xy):
+            cur_freq = torch.cat([torch.sin(2 ** l * np.pi * pts[:, 1][:, None]),
+                                  torch.cos(2 ** l * np.pi * pts[:, 1][:, None])], dim=-1)
+            if l == 0:
+                tot_freq = cur_freq
+            else:
+                tot_freq = torch.cat([tot_freq, cur_freq], dim=-1)
+
+        for l in range(self.l_xy):
+            cur_freq = torch.cat([torch.sin(2 ** l * np.pi * pts[:, 2][:, None]),
+                                  torch.cos(2 ** l * np.pi * pts[:, 2][:, None])], dim=-1)
+            tot_freq = torch.cat([tot_freq, cur_freq], dim=-1)
+
+        for l in range(self.l_z):
+            cur_freq = torch.cat([torch.sin(2 ** l * np.pi * pts[:, 0][:, None]),
+                                  torch.cos(2 ** l * np.pi * pts[:, 0][:, None])], dim=-1)
+            tot_freq = torch.cat([tot_freq, cur_freq], dim=-1)
+
+        return tot_freq
+
