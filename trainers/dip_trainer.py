@@ -16,8 +16,7 @@ class DIPTrainer(Trainer):
 
         # ------------- DIP SPECIFIC INIT -------------
         self.weights = weights
-        self.net = SkipNet3D()
-        self.net = nn.DataParallel(self.net).to(device)
+        self.net = SkipNet3D().to(device)
 
         if weights is not None:
             self.net.load_state_dict(torch.load(weights + "/net.pt"))
