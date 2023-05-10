@@ -1,13 +1,13 @@
 import argparse
 import yaml
 from collections import defaultdict
-import sys
 
 from trainers.iter_trainer import IterTrainer
 from trainers.dip_trainer import DIPTrainer
 from trainers.nf_trainer import NFTrainer
 from img_model import ImagingModel
 from utils.loading import *
+
 
 if __name__ == "__main__":
     # ------------------ ARGUMENT PARSING ------------------

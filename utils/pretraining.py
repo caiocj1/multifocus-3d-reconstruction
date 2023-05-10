@@ -21,7 +21,7 @@ class PretrainingDataset(Dataset):
         dataset = []
 
         for i in range(nsamples):
-            n_ellipsoids = np.random.randint(low=4, high=12)
+            n_ellipsoids = np.random.randint(low=8, high=12)
             Y = np.zeros(shape[-3:])
             for j in range(n_ellipsoids):
                 a, b, c = np.random.uniform(low=1, high=8, size=3)
