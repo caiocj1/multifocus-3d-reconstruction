@@ -36,6 +36,3 @@ ImgModelParams:
   z_res: 1.0
   NA: 0.75
   layers: 11
-
-MainParams:
-  noise_level: 0

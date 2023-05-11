@@ -20,19 +20,12 @@ if __name__ == "__main__":
     parser.add_argument("--pretraining", "-p", choices=["sc", "v2", "v3", "const"], help="type of pretraining")
     parser.add_argument("--version", "-v", type=str, help="version name for Tensorboard")
     parser.add_argument("--weights", "-w", type=str, help="path to load model state dict")
+    parser.add_argument("--noise_level", "-n", type=float, default=0, help="variance of noise to apply to observations")
 
     args = parser.parse_args()
 
     if args.version is not None:
         print(args.version)
-
-    # ------------------ READ CONFIG FILE ------------------
-    config_path = os.path.join(os.getcwd(), "config.yaml")
-    with open(config_path) as f:
-        params = yaml.load(f, Loader=yaml.SafeLoader)
-    main_params = params["MainParams"]
-
-    noise_level = main_params["noise_level"]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -41,11 +34,11 @@ if __name__ == "__main__":
     img_list = imreads_uint(in_paths, 1)
     imgs = imglist2tensor(img_list)  # tensor(C, N, H, W)
 
-    if noise_level != 0:
+    if args.noise_level != 0:
         x = imgs.to('cpu').detach().numpy().copy()
 
         np.random.seed(seed=0)  # for reproducibility
-        x += np.random.normal(0, noise_level / 255, x.shape)  # add AWGN
+        x += np.random.normal(0, args.noise_level, x.shape)  # add AWGN
 
         imgs = torch.from_numpy(x.astype(np.float32)).clone()
     imgs = torch.clip(imgs, min=0, max=1)
