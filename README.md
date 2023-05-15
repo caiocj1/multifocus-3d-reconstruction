@@ -20,7 +20,7 @@ To run training on sample, `python main.py -m <model_name> -i <input_imgs_path>`
 `-p`: Pretrain model. If `"dip"`, must be in `["sc", "v2", "v3"]`. If `"nf"`, must be `"const"`. Weights of network are
 saved inside the run's TensorBoard folder. \
 `-w`: Path to pretrained model weights. If given along with `-p`, pretraining will be skipped. \
-`-s`: Whether to save final voxel volume in run's TensorBoard folder (NOT IMPLEMENTED YET).
+`-n`: Noise level to apply to observed images. Variance of centered normal distribution. Default: 0.
 
 ### References
 

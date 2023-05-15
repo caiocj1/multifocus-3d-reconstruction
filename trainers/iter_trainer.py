@@ -2,6 +2,7 @@ import os
 import yaml
 import torch
 import torch.nn as nn
+import numpy as np
 from tqdm import tqdm
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
@@ -84,3 +85,4 @@ class IterTrainer(Trainer):
             print("Training interrupted.")
 
         self.log_hparams()
+        np.save(f"tb_logs/{self.version}/alpha.npy", self.omega.cpu().detach().numpy())
