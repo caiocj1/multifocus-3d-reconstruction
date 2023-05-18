@@ -36,14 +36,14 @@ class PretrainingDataset(Dataset):
                 Y += ellipsoid
 
             Y = np.clip(Y, 0, 1)
-            X = Y.copy() + np.random.uniform(high=0.2, size=Y.shape)
+            X = Y.copy() + np.random.normal(0, 0.01, size=Y.shape)
             X = np.clip(X, 0, 1)
             dataset.append((1 - X, 1 - Y))
 
         return dataset
 
 
-def pretraining_v2(inp, net, version, n_epochs=3, writer=None):
+def pretraining_v2(inp, net, version, n_epochs=5, writer=None):
     target_shape = list(inp.shape)
 
     device = next(net.parameters()).device
