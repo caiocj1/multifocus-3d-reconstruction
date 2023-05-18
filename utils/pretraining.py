@@ -36,20 +36,23 @@ class PretrainingDataset(Dataset):
                 Y += ellipsoid
 
             Y = np.clip(Y, 0, 1)
-            X = Y.copy() + np.random.uniform(high=0.1, size=Y.shape)
+            X = Y.copy() + np.random.uniform(high=0.2, size=Y.shape)
             X = np.clip(X, 0, 1)
             dataset.append((1 - X, 1 - Y))
 
         return dataset
 
 
-def pretraining_v2(inp, net, version, n_epochs=5, writer=None):
+def pretraining_v2(inp, net, version, n_epochs=3, writer=None):
     target_shape = list(inp.shape)
 
     device = next(net.parameters()).device
 
     train_dataset = PretrainingDataset(1000, target_shape)
     train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=20)
+
+    val_dataset = PretrainingDataset(200, target_shape)
+    val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=20)
 
     optim = torch.optim.Adam(net.parameters())
     loss_fn = torch.nn.MSELoss()
@@ -73,10 +76,25 @@ def pretraining_v2(inp, net, version, n_epochs=5, writer=None):
                     if writer is not None:
                         writer.add_scalar("pretraining_loss/train_step", loss.item(),
                                           global_step=e * len(train_dataloader) + i)
-                        # Visualize
-                        if i % 10 == 0:
-                            fig = plot_slices(y[0, 0].cpu().detach().numpy(), alpha[0, 0].cpu().detach().numpy())
-                            writer.add_figure(f"pretraining_train/img", fig, global_step=e * len(train_dataloader) + i)
+
+            net.eval()
+            with tqdm(enumerate(val_dataloader), total=len(val_dataloader), leave=False, desc=f"Epoch {e}") as pbar:
+                running_loss = 0
+                for i, (x, y) in pbar:
+                    x = x[:, None].to(device).float()
+                    y = y[:, None].to(device).float()
+                    alpha = net(x)
+                    loss = loss_fn(alpha, y)
+                    pbar.set_postfix(loss='{:.10f}'.format(loss.item()))
+                    running_loss += loss.item()
+                running_loss /= len(val_dataloader)
+
+                if writer is not None:
+                    writer.add_scalar("pretraining_loss/val", running_loss, global_step=e)
+                    # Visualize
+                    fig = plot_slices(y[0, 0].cpu().detach().numpy(), alpha[0, 0].cpu().detach().numpy())
+                    writer.add_figure(f"pretraining_train/img", fig, global_step=e)
+            net.train()
     except KeyboardInterrupt:
         print('Received keyboard interrupt. Stopping pre-training.')
 
