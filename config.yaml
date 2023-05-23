@@ -20,7 +20,7 @@ IterParams:
   n_iter: 5000
   mu: 0.001
   lr: 0.005
-  flag: 1
+  flag: 0
 
 NFParams:
   n_iter: 100000
