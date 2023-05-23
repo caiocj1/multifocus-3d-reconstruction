@@ -38,7 +38,7 @@ class Trainer:
 
     def log_figs(self, step, *vols):
         vol_list = list(vols)
-        if hasattr(self, "writer") and step % 100 == 0:
+        if hasattr(self, "writer") and step % 20 == 0:
             for i in range(len(vol_list)):
                 if len(vol_list[i].shape) == 5:
                     vol_list[i] = vol_list[i][0, 0]
