@@ -35,4 +35,4 @@ ImgModelParams:
   xy_res: 0.92
   z_res: 1.0
   NA: 0.75
-  layers: 11
+  layers: 20
