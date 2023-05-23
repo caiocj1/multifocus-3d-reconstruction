@@ -36,7 +36,7 @@ class PretrainingDataset(Dataset):
                 Y += ellipsoid
 
             Y = np.clip(Y, 0, 1)
-            X = Y.copy() + np.random.uniform(0, 0.1, size=Y.shape)
+            X = Y.copy() + np.random.uniform(0, 0.05, size=Y.shape)
             X = np.clip(X, 0, 1)
             dataset.append((1 - X, 1 - Y))
 
