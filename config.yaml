@@ -2,7 +2,7 @@ DIPParams:
   n_iter: 30000
   lr: 0.001
 
-  pretr_iter: 1000
+  pretr_iter: 500
 
   in_channels: 1
   out_channels: 1
