@@ -43,7 +43,7 @@ class PretrainingDataset(Dataset):
         return dataset
 
 
-def pretraining_v2(inp, net, version, n_epochs=3, writer=None):
+def pretraining_v2(inp, net, version, n_epochs=7, writer=None):
     target_shape = list(inp.shape)
 
     device = next(net.parameters()).device
