@@ -43,12 +43,12 @@ class PretrainingDataset(Dataset):
         return dataset
 
 
-def pretraining_v2(inp, net, version, n_epochs=7, writer=None):
+def pretraining_v2(inp, net, version, n_epochs=5, writer=None):
     target_shape = list(inp.shape)
 
     device = next(net.parameters()).device
 
-    train_dataset = PretrainingDataset(1000, target_shape)
+    train_dataset = PretrainingDataset(2000, target_shape)
     train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=20)
 
     optim = torch.optim.Adam(net.parameters())
