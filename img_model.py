@@ -1,7 +1,3 @@
-"""
-All credits for this file go to Yamaguchi
-"""
-
 from utils.lighting import *
 
 import torch

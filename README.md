@@ -1,7 +1,6 @@
 # 3D Reconstruction from Multi-Focus Microscopic Images
 
-This repository builds on the work of Takahiro Yamaguchi [1] 
-and Sanchayan Santra [2], which aims to reconstruct 3D models of cells from
+This repository builds on the work of Takahiro Yamaguchi [1], which aims to reconstruct 3D models of cells from
 multi-focus microscopic images.
 
 ### Instructions
@@ -27,5 +26,3 @@ saved inside the run's TensorBoard folder. \
 [1] Yamaguchi, T. et al. (2020). 3D Image Reconstruction from Multi-focus Microscopic Images. In: Dabrowski, J., Rahman,
 A., Paul, M. (eds) Image and Video Technology. PSIVT 2019. Lecture Notes in Computer Science(), vol 11994. Springer, 
 Cham. https://doi.org/10.1007/978-3-030-39770-8_6
-
-[2] https://scholar.google.com/citations?user=ob4KL10AAAAJ&hl=en&authuser=1&oi=ao
