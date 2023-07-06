@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--version", "-v", type=str, help="version name for Tensorboard")
     parser.add_argument("--weights", "-w", type=str, help="path to load model state dict")
     parser.add_argument("--noise_level", "-n", type=float, default=0, help="variance of noise to apply to observations")
+    parser.add_argument("--psf_mask", "-psf", type=str, help="path to psf mask .npy")
 
     args = parser.parse_args()
 
@@ -51,7 +52,7 @@ if __name__ == "__main__":
         slices = imglist2tensor(slice_list)
 
     # ------------------ ASSIGN MODELS AND TRAINER ------------------
-    img_model = ImagingModel(device)
+    img_model = ImagingModel(device, args.psf_mask)
 
     model_dict = defaultdict()
     model_dict["iter"] = IterTrainer
