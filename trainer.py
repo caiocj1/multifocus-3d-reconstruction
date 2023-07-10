@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 
-from utils.plotting import plot_slices
+from utils.plotting import plot_slices, plot_figure
 
 
 class Trainer:
@@ -17,6 +18,9 @@ class Trainer:
 
         if version is not None:
             self.writer = SummaryWriter(log_dir=f"tb_logs/{version}")
+        fig = plot_figure(img_model.ray_sel)
+        self.writer.add_figure("aperture", fig, global_step=0)
+        plt.close(fig)
 
     def read_config(self):
         raise NotImplementedError

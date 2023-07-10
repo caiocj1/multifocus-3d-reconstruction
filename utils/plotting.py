@@ -18,3 +18,9 @@ def plot_slices(*args):
     height = (20 / shape[0]) * nrows
     fig.set_size_inches(20, height)
     return fig
+
+def plot_figure(array):
+    fig = plt.figure()
+    plt.imshow(array, cmap="gray")
+    plt.axis("off")
+    return fig

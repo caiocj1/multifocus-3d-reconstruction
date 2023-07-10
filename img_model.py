@@ -18,12 +18,14 @@ class ImagingModel:
         self.ray_mat = range_matrix_generation(self.ray_num, ray_check, self.layers,
                                                diameter, self.apa_size, self.xy_res, self.z_res)
 
+        ray_check = np.array(ray_check).reshape((self.apa_size, self.apa_size))
+        self.ray_sel = ray_check != -1
+        self.rescale = 1
         if psf_mask is not None:
             mask = np.load(psf_mask, allow_pickle=True)
-            ray_check = np.array(ray_check).reshape((self.apa_size, self.apa_size))
-            ray_valid = ray_check != -1
-            ray_sel = np.logical_and(ray_valid, mask)
-            self.ray_mat = self.ray_mat[ray_check[ray_sel]]
+            self.rescale = mask.mean()
+            self.ray_sel = np.logical_and(self.ray_sel, mask)
+            self.ray_mat = self.ray_mat[ray_check[self.ray_sel]]
 
         self.ray_mat = torch.from_numpy(self.ray_mat).clone()  # (ray_num, 2*layer-1, , )
         self.ray_mat = self.ray_mat.to(torch.float32).to(device)
@@ -49,5 +51,6 @@ class ImagingModel:
                            self.ray_mat[:, self.layers - 1 - s:2 * self.layers - 1 - s, :, :],
                            padding=self.padding_size)
             out = self.intensity * torch.sum(torch.exp(out), dim=1).squeeze()
+            out = torch.clamp(out / self.rescale, 0, 1)
             img_list.append(out)
         return img_list
