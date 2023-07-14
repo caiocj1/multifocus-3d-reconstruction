@@ -24,3 +24,17 @@ def plot_figure(array):
     plt.imshow(array, cmap="gray")
     plt.axis("off")
     return fig
+
+def plot_multifigures(*imgs):
+    shape = imgs[0].shape
+
+    n_figs = len(imgs)
+    fig, axs = plt.subplots(1, n_figs)
+    for i in range(n_figs):
+        axs[i].imshow(imgs[i][0, 0].cpu().detach().numpy(), cmap="gray", vmin=0, vmax=1)
+        axs[i].axis("off")
+
+    fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
+    width = 6 * n_figs
+    fig.set_size_inches(width, 6)
+    return fig

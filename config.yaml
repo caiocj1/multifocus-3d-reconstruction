@@ -23,13 +23,13 @@ IterParams:
   lr: 0.005
   flag: 0
 
-NFParams:
-  n_iter: 100000
-  lr: 0.0001
-
-  n_layers: 10
-  hidden_size: 208
-  use_pe: True
+#NFParams:
+#  n_iter: 100000
+#  lr: 0.0001
+#
+#  n_layers: 10
+#  hidden_size: 208
+#  use_pe: True
 
 ImgModelParams:
   apa_size: 25
@@ -37,3 +37,10 @@ ImgModelParams:
   z_res: 1.0
   NA: 0.75
   layers: 11
+
+DenoiserParams:
+  gain: 0.1
+  shape: 0.12
+  color_bias: 0.0
+  sigma_tl: 0.005
+  sigma_r: 0.003
