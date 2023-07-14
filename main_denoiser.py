@@ -25,17 +25,17 @@ if __name__ == "__main__":
 
     # ------------------ PREPARE DATASET ------------------
     val_preprocess = transforms.Compose([
+        transforms.Grayscale(),
         transforms.Resize(256),
         transforms.CenterCrop(224),
-        transforms.Grayscale(),
         transforms.ToTensor(),
-        #transforms.Normalize(mean=0.44531356896770125, std=0.2692461874154524),
+        #transforms.Normalize(mean=0.44531356896770125, std=0.26    92461874154524),
     ])
 
     train_preprocess = transforms.Compose([
+        transforms.Grayscale(),
         transforms.Resize(256),
         transforms.CenterCrop(224),
-        transforms.Grayscale(),
         transforms.RandAugment(num_ops=2, magnitude=15),
         transforms.ToTensor(),
         #transforms.Normalize(mean=0.44531356896770125, std=0.2692461874154524),
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # train_dataset.imgs = train_dataset.imgs[:1000]
     # train_dataset.targets = train_dataset.targets[:1000]
     train_dataloader = DataLoader(train_dataset,
-                                  batch_size=512,
+                                  batch_size=128,
                                   num_workers=16,
                                   shuffle=True)
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # val_dataset.imgs = val_dataset.imgs[:1000]
     # val_dataset.targets = val_dataset.targets[:1000]
     val_dataloader = DataLoader(val_dataset,
-                                batch_size=512,
+                                batch_size=128,
                                 num_workers=16,
                                 shuffle=False)
 
