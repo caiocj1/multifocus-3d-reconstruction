@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # train_dataset.imgs = train_dataset.imgs[:1000]
     # train_dataset.targets = train_dataset.targets[:1000]
     train_dataloader = DataLoader(train_dataset,
-                                  batch_size=128,
+                                  batch_size=256,
                                   num_workers=16,
                                   shuffle=True)
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # val_dataset.imgs = val_dataset.imgs[:1000]
     # val_dataset.targets = val_dataset.targets[:1000]
     val_dataloader = DataLoader(val_dataset,
-                                batch_size=128,
+                                batch_size=256,
                                 num_workers=16,
                                 shuffle=False)
 

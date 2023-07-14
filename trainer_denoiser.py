@@ -125,18 +125,18 @@ class DenoisingTrainer:
 
     def train(self):
         try:
-            for epoch in range(300):
+            for epoch in range(100):
                 epoch_loss = self.train_loop(epoch)
                 self.writer.add_scalar("loss/train_epoch", epoch_loss, global_step=epoch)
 
                 epoch_loss = self.val_loop(epoch)
                 self.writer.add_scalar("loss/val_epoch", epoch_loss, global_step=epoch)
 
-            torch.save(self.model.state_dict(), f"tb_logs/{self.version}")
             print("Training ended.")
         except KeyboardInterrupt:
             print("Training interrupted.")
 
+        torch.save(self.model.state_dict(), f"tb_logs/{self.version}")
         self.log_hparams()
 
     def log_hparams(self):
