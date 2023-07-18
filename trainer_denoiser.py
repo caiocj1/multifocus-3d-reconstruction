@@ -22,8 +22,10 @@ class DenoisingTrainer:
         self.version = version
         self.device = device
 
+        self.n_iter = 100
         self.loss_fn = nn.L1Loss()
-        self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
+        self.optim = torch.optim.AdamW(self.model.parameters(), lr=1e-4)
+        self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, T_max=self.n_iter * len(self.train_dataloader))
         self.normalize = transforms.Normalize(mean=0.44531356896770125, std=0.2692461874154524)
 
         if version is not None:
@@ -55,6 +57,8 @@ class DenoisingTrainer:
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
+
+                self.lr_scheduler.step()
 
                 # --------------------- LOGGING ---------------------
                 pbar.set_postfix(loss='{:.10f}'.format(loss.item()))
@@ -125,7 +129,7 @@ class DenoisingTrainer:
 
     def train(self):
         try:
-            for epoch in range(100):
+            for epoch in range(self.n_iter):
                 epoch_loss = self.train_loop(epoch)
                 self.writer.add_scalar("loss/train_epoch", epoch_loss, global_step=epoch)
 
@@ -136,7 +140,7 @@ class DenoisingTrainer:
         except KeyboardInterrupt:
             print("Training interrupted.")
 
-        torch.save(self.model.state_dict(), f"tb_logs/{self.version}")
+        torch.save(self.model.state_dict(), f"tb_logs/{self.version}/denoiser_model.pt")
         self.log_hparams()
 
     def log_hparams(self):
