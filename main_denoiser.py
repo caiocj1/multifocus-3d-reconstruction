@@ -48,7 +48,8 @@ if __name__ == "__main__":
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=256,
                                   num_workers=16,
-                                  shuffle=True)
+                                  shuffle=True,
+                                  prefetch_factor=8, pin_memory=True, persistent_workers=True)
 
     val_dataset = ImageFolder(os.path.join(args.input, "val"), transform=val_preprocess)
     # val_dataset.samples = val_dataset.samples[:1000]
@@ -57,7 +58,8 @@ if __name__ == "__main__":
     val_dataloader = DataLoader(val_dataset,
                                 batch_size=256,
                                 num_workers=16,
-                                shuffle=False)
+                                shuffle=False,
+                                prefetch_factor=8, pin_memory=True, persistent_workers=True)
 
     # ------------------ GET MODEL, TRAINER AND TRAIN ------------------
     model = SeeInDark()
