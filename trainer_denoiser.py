@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 import os
 import yaml
+import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 import torch
@@ -46,7 +47,8 @@ class DenoisingTrainer:
             for i, batch in pbar:
                 x, _ = batch
                 x = x.to(self.device)
-                x_noise = x + torch.tensor(real_noise(x.cpu().numpy(), **self.denoising_params)).to(self.device)
+                noise_params = {k: v + np.random.uniform(low=-0.2, high=0.2) * v for k, v in self.denoising_params.items()}
+                x_noise = x + torch.tensor(real_noise(x.cpu().numpy(), **noise_params)).to(self.device)
                 inp = self.normalize(x_noise)
                 inp = inp.detach().clone()
 

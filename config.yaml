@@ -39,8 +39,8 @@ ImgModelParams:
   layers: 11
 
 DenoiserParams:
-  gain: 0.1
-  shape: 0.12
+  gain: 0.2
+  shape: 0.13
   color_bias: 0.0
   sigma_tl: 0.005
   sigma_r: 0.003
