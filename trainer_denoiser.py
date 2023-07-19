@@ -48,7 +48,10 @@ class DenoisingTrainer:
                 x, _ = batch
                 x = x.to(self.device)
                 noise_params = {k: v + np.random.uniform(low=-0.2, high=0.2) * v for k, v in self.denoising_params.items()}
-                x_noise = x + torch.tensor(real_noise(x.cpu().numpy(), **noise_params)).to(self.device)
+                light = np.random.uniform(low=0.2, high=1.0)
+                x_noise = x * light
+                x_noise += torch.tensor(real_noise(x.cpu().numpy(), **noise_params)).to(self.device)
+                x_noise /= light
                 inp = self.normalize(x_noise)
                 inp = inp.detach().clone()
 
@@ -138,6 +141,7 @@ class DenoisingTrainer:
                 epoch_loss = self.val_loop(epoch)
                 self.writer.add_scalar("loss/val_epoch", epoch_loss, global_step=epoch)
 
+                torch.save(self.model.state_dict(), f"tb_logs/{self.version}/denoiser_epoch_{epoch:03}.pt")
             print("Training ended.")
         except KeyboardInterrupt:
             print("Training interrupted.")
