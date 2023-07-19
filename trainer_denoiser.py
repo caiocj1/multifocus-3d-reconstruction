@@ -72,10 +72,10 @@ class DenoisingTrainer:
                                        global_step=epoch * len(self.train_dataloader) + i)
 
                 psnr = peak_signal_noise_ratio(out.cpu().detach().numpy(), x.cpu().detach().numpy())
-                self.writer.add_scalar("psnr/train_step", psnr, global_step=i)
+                self.writer.add_scalar("psnr/train_step", psnr, global_step=epoch * len(self.train_dataloader) + i)
 
                 ssim = structural_similarity(out.cpu().detach().numpy(), x.cpu().detach().numpy(), channel_axis=1)
-                self.writer.add_scalar("ssim/train_step", ssim, global_step=i)
+                self.writer.add_scalar("ssim/train_step", ssim, global_step=epoch * len(self.train_dataloader) + i)
 
                 total_loss += loss.item()
                 self.writer.add_scalar("loss/train_step", loss.item(),
@@ -102,7 +102,12 @@ class DenoisingTrainer:
                 for i, batch in pbar:
                     x, _ = batch
                     x = x.to(self.device)
-                    x_noise = x + torch.tensor(real_noise(x.cpu().numpy(), **self.denoising_params)).to(self.device)
+                    noise_params = {k: v + np.random.uniform(low=-0.2, high=0.2) * v for k, v in
+                                    self.denoising_params.items()}
+                    light = np.random.uniform(low=0.2, high=1.0)
+                    x_noise = x * light
+                    x_noise += torch.tensor(real_noise(x.cpu().numpy(), **noise_params)).to(self.device)
+                    x_noise /= light
                     inp = self.normalize(x_noise)
                     inp = inp.detach().clone()
 
