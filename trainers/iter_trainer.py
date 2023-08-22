@@ -12,7 +12,7 @@ from trainer import Trainer
 
 
 class IterTrainer(Trainer):
-    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None):
+    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None, denoiser_weights=None):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- ITER SPECIFIC INIT -------------
