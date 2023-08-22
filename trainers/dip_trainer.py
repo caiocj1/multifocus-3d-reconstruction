@@ -89,8 +89,11 @@ class DIPTrainer(Trainer):
                     vol_list = [self.obs, out, self.gt, alpha] if self.gt is not None else [self.obs, out, alpha]
                     vol_list = [vol.cpu().detach().numpy() for vol in vol_list]
                     self.log_figs(i, *vol_list)
+
+                    if i % 50 == 0:
+                        np.save(f"tb_logs/{self.version}/alpha_{i:05}.npy", alpha.cpu().detach().numpy())
         except KeyboardInterrupt:
             print("Training interrupted.")
 
         self.log_hparams()
-        np.save(f"tb_logs/{self.version}/alpha.npy", alpha.cpu().detach().numpy())
+

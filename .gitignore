@@ -5,3 +5,4 @@ __pycache__/
 *.sh
 utils/__pychache__/
 .idea/
+trainers/__pycache__/
