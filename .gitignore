@@ -4,3 +4,4 @@ results/
 __pycache__/
 *.sh
 utils/__pychache__/
+.idea/
