@@ -81,6 +81,9 @@ class IterTrainer(Trainer):
                         [self.obs, torch.stack(img_list), torch.exp(self.omega)]
                     vol_list = [vol.cpu().detach().numpy() for vol in vol_list]
                     self.log_figs(i, *vol_list)
+
+                    if i % 5 == 0:
+                        np.save(f"tb_logs/{self.version}/alpha_{i:05}.npy", trans.cpu().detach().numpy())
         except KeyboardInterrupt:
             print("Training interrupted.")
 
