@@ -83,6 +83,7 @@ class IterTrainer(Trainer):
                     self.log_figs(i, *vol_list)
 
                     if i % 5 == 0:
+                        trans = torch.exp(self.omega.detach())
                         np.save(f"tb_logs/{self.version}/alpha_{i:05}.npy", trans.cpu().detach().numpy())
         except KeyboardInterrupt:
             print("Training interrupted.")
