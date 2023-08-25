@@ -12,8 +12,7 @@ from utils.pretraining import pretraining_v3, pretraining_sc, pretraining_v2
 
 
 class DIPTrainer(Trainer):
-    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None,
-                 **kwargs):
+    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None, **kwargs):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- DIP SPECIFIC INIT -------------

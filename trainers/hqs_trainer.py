@@ -12,8 +12,8 @@ from trainer import Trainer
 
 
 class HQSTrainer(Trainer):
-    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None,
-                 denoiser_weights=None, noise_level=0.0, **kwargs):
+    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, denoiser_weights=None,
+                 noise_level=0.0, **kwargs):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- DIP SPECIFIC INIT -------------
