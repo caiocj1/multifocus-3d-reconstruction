@@ -24,7 +24,7 @@ IterParams:
   flag: 0
 
 HQSParams:
-  n_iter: 80
+  n_iter: 5000
   lr: 0.001
   flag: 0
 

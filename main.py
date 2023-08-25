@@ -68,7 +68,8 @@ if __name__ == "__main__":
                                      gt_slices=slices,
                                      version=args.version,
                                      weights=args.weights,
-                                     denoiser_weights=args.denoiser_weights)
+                                     denoiser_weights=args.denoiser_weights,
+                                     noise_level=args.noise_level)
 
     # ------------------ TRAIN ------------------
     if args.pretraining is not None:

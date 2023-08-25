@@ -6,16 +6,14 @@ import numpy as np
 from tqdm import tqdm
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
-from models.skipnet3d import SkipNet3D
 from utils.lighting import default_transmittance
-from total_variation_3d import TotalVariationL2
 from models.network_dncnn import IRCNN
 from trainer import Trainer
-from utils.pretraining import pretraining_v3, pretraining_sc, pretraining_v2
 
 
 class HQSTrainer(Trainer):
-    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None, denoiser_weights=None):
+    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None,
+                 denoiser_weights=None, noise_level=0.0, **kwargs):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- DIP SPECIFIC INIT -------------
@@ -41,7 +39,7 @@ class HQSTrainer(Trainer):
         for _, p in self.denoiser.named_parameters():
             p.requires_grad = False
 
-        self.rhos, self.sigmas = self.get_rho_sigma(sigma=max(0.255 / 255., 0),
+        self.rhos, self.sigmas = self.get_rho_sigma(sigma=max(0.255 / 255., noise_level),
                                                     iter_num=self.n_iter,
                                                     modelSigma1=2.55,
                                                     modelSigma2=0.255,
@@ -70,10 +68,8 @@ class HQSTrainer(Trainer):
                     # print(f'current idx : {current_idx} sigma : {sigmas[i].cpu().numpy()}')
                     if current_idx != former_idx:
                         # model.load_state_dict(model25[str(current_idx)], strict=True)
-                        self.denoiser.eval()
-                        for _, v in self.denoiser.named_parameters():
-                            v.requires_grad = False
-                    former_idx = current_idx
+
+                        former_idx = current_idx
 
                     with torch.no_grad():
                         beta = self.denoiser_3d(self.omega)
@@ -116,15 +112,19 @@ class HQSTrainer(Trainer):
                         [self.obs, torch.stack(img_list), torch.exp(self.omega)]
                     vol_list = [vol.cpu().detach().numpy() for vol in vol_list]
                     self.log_figs(i, *vol_list)
+
+                    if i % 5 == 0:
+                        trans = torch.exp(self.omega.detach())
+                        np.save(f"tb_logs/{self.version}/alpha_{i:05}.npy", trans.cpu().detach().numpy())
         except KeyboardInterrupt:
             print("Training interrupted.")
 
         self.log_hparams()
-        np.save(f"tb_logs/{self.version}/alpha.npy", self.omega.cpu().detach().numpy())
 
     def denoiser_3d(self, alpha):
         beta = torch.squeeze(alpha)
         beta = torch.unsqueeze(beta, dim=1)
+        beta = torch.exp(beta)
 
         # --------------------------------
         # denoiser in xy plane
@@ -150,6 +150,7 @@ class HQSTrainer(Trainer):
         beta = torch.squeeze(beta)
         beta = torch.unsqueeze(beta, dim=0)
         beta = torch.unsqueeze(beta, dim=0)
+        beta = torch.log(beta)
 
         return beta
 
