@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--denoiser_weights", "-dn", type=str, help="path to denoiser state dict")
     parser.add_argument("--noise_level", "-n", type=float, default=0, help="variance of noise to apply to observations")
     parser.add_argument("--psf_mask", "-psf", type=str, help="path to psf mask .npy")
+    parser.add_argument("--save_every_iter", action="store_true", help="when using dip, whether to save inter. voxels")
 
     args = parser.parse_args()
 
@@ -69,7 +70,8 @@ if __name__ == "__main__":
                                      version=args.version,
                                      weights=args.weights,
                                      denoiser_weights=args.denoiser_weights,
-                                     noise_level=args.noise_level)
+                                     noise_level=args.noise_level,
+                                     save_every_iter=args.save_every_iter)
 
     # ------------------ TRAIN ------------------
     if args.pretraining is not None:

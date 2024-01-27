@@ -12,7 +12,15 @@ from utils.pretraining import pretraining_v3, pretraining_sc, pretraining_v2
 
 
 class DIPTrainer(Trainer):
-    def __init__(self, img_model, input_imgs, device, gt_slices=None, version=None, weights=None, **kwargs):
+    def __init__(self,
+                 img_model,
+                 input_imgs,
+                 device,
+                 gt_slices=None,
+                 version=None,
+                 weights=None,
+                 save_every_iter=False,
+                 **kwargs):
         super().__init__(img_model, input_imgs, device, gt_slices, version)
 
         # ------------- DIP SPECIFIC INIT -------------
@@ -32,6 +40,8 @@ class DIPTrainer(Trainer):
         self.optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
 
         self.loss_fn = nn.L1Loss()
+
+        self.save_every_iter = save_every_iter
 
     def read_config(self):
         config_path = os.path.join(os.getcwd(), "config.yaml")
@@ -90,7 +100,7 @@ class DIPTrainer(Trainer):
                     vol_list = [vol.cpu().detach().numpy() for vol in vol_list]
                     self.log_figs(i, *vol_list)
 
-                    if i % 50 == 0:
+                    if self.save_every_iter and i % 50 == 0:
                         np.save(f"tb_logs/{self.version}/alpha_{i:05}.npy", alpha.cpu().detach().numpy())
         except KeyboardInterrupt:
             print("Training interrupted.")
